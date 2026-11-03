@@ -24,6 +24,29 @@ Use a web server rather than double-clicking index.html: browser modules need HT
 - Course/tee creation and editing, hole pars and stroke indices, course JSON import/export.
 - Automatic local-device saving and complete round JSON export/import. One active round; export files to archive multiple rounds.
 - Unit tests, GitHub Actions checks, rule notes and sample course JSON.
+- A 14-player, 12-competition season, averaged points for tied places, Total Points and a final Playing Handicap column, Captain’s Pick, saved event cards and rolling handicap estimates.
+
+## The 12-competition season
+
+Open **The season → Set up 14-player season**. This keeps the existing players and fills empty slots to make 14. Set player names and tees on The round, then enter starting handicap **indices** in the season setup. The starting values are not already-converted playing strokes. The season roster stays at 14; starting indices and prior histories lock after the first recorded event.
+
+The events, in order, are Official Stableford, Best Front 9, Official Medal, Best Back 9, Best Stableford, Best Par 3, Stableford - unofficial, Best Par 5, SI 10 to 18, Best Par 4, SI 1 to 9, and Captains Pick. All use Stableford points on the indicated holes, except Official Medal, which uses lowest 18-hole net strokes. All Stableford variants have identical scoring mechanics; their names distinguish separate events. Captain’s Pick selects one of the first 11 types and inherits its scoring and hole selection. “Official” is an event name, not an official score-submission status.
+
+Each event awards **14 to 1 season points** to 14 players. Tied places share the average of their occupied points: two tied first receive 13.5 each, third receives 12. Medal NR cards rank below numeric cards, with multiple NRs tied. Every event distributes 105 points; 12 events distribute 1,260. Equal season totals share their finishing position.
+
+Choose **Prepare next competition** to clear the active card, select the matching round format/allowance, and enter the next 18-hole round. Choose Captain’s Pick before preparing event 12. Set the course and tees on The round. In The season, select the next event and **Record current round** after all 14 complete cards are entered. A subset prize still needs 18 hole entries for the handicap update. Partial cards cannot earn final season points. Played holes without a valid score use X; truly unplayed holes remain blank and block recording. Use Undo latest competition to correct the last result, then record it again. Repeated Undo can reopen earlier events.
+
+Recording snapshots gross scores and tee ratings, awards points, calculates a complete-round Score Differential, and updates each player’s competition index for the next event. Both tabs use that evolving local index once a season exists; the round player card shows the computed Competition index as read-only. Edit the initial index in the season setup, not on that card. Original reference WHS values are retained in exported data. Existing standalone round files still import.
+
+The standings show each event’s season points and raw competition score, Total Points, starting/current index, and **Playing Handicap as the final column**. That PH uses the currently selected course/player tees and the next event’s allowance (last event’s settings after the season ends), so it changes if you change the upcoming tee. Individual recorded event results retain the actual PH used on that day.
+
+### Handicap history and limits
+
+You requested WHS averaging: this uses the best **8 Score Differentials of the latest 20**, not eight gross scores or eight competition point totals. Enter up to 20 real prior Score Differentials per player, separated by commas, oldest first. No prior history is invented from the starting index. With fewer than three recorded differentials, the starting index is retained; with 3–19 the Rule 5.2a shorter-history table applies. Once 20 are available, every new card removes the oldest from the calculation window.
+
+These are **local competition index estimates**, not official WHS updates. The implementation includes net-double-bogey adjusted gross scoring, the 18-hole differential formula, published PCC input (default zero), the short-history table and best-eight averaging. It omits soft/hard caps, exceptional score reductions, committee adjustments, official score eligibility and submission. Existing players who omit their prior history can see different results from their official index. Values are kept within the app’s supported -10.0 to 54.0 range. See [docs/SEASON.md](docs/SEASON.md) for formulas and sources.
+
+Round/season export includes the full course library, starting histories, 12-event settings and recorded scorecards. Use **Import saved round** on The round tab to restore it. Course-only imports remain separate. No shared server or cross-device sync is added.
 
 ## Play a round
 
@@ -43,7 +66,7 @@ Use `samples/course.json` as the course import schema. Each tee has exactly 18 `
 
 ## Rule coverage
 
-See [docs/RULES.md](docs/RULES.md) for formulas, rounding, sources reviewed on 3 November 2026, implementation decisions and exclusions. This is an England-oriented social competition calculation profile, not a certified all-UK competition or handicapping service. Committee policies and home-union implementation must be checked. It consumes an existing index; it does not update that index or submit acceptable scores.
+See [docs/RULES.md](docs/RULES.md) and [docs/SEASON.md](docs/SEASON.md) for formulas, rounding, sources reviewed on 3 November 2026, implementation decisions and exclusions. This is an England-oriented social competition calculation profile, not a certified all-UK competition or handicapping service. Committee policies and home-union implementation must be checked. Official indices are not updated and acceptable scores are not submitted; the season maintains a separate local estimate.
 
 ## Deploy to GitHub Pages
 
@@ -57,10 +80,10 @@ GitHub Actions runs tests and a static build on pushes and pull requests. No dep
 
 ## Structure
 
-`src/rules.js` pure calculation engine · `src/data.js` fictional demos · `src/app.js` UI and storage · `tests/rules.test.js` reference/edge cases · `docs/RULES.md` rule mapping · `server.mjs` local preview · `build.mjs` static export.
+`src/rules.js` round calculations · `src/season.js` season/handicap estimates · `src/season-ui.js` season screen · `src/data.js` fictional demos · `src/app.js` round UI and storage · `tests/` calculations and handler smoke tests · `docs/` rule mapping and season guide · `server.mjs` local preview · `build.mjs` static export.
 
 ## Operational boundaries
 
-Scores and settings remain editable and are not locked or attested. Ties remain tied, with no countback or sudden-death holes. Incomplete individual stroke cards are separated from complete results, and all incomplete results remain provisional. Team points require an entry from both partners per hole (use X for a partner who picks up). Gross subtotals exclude X; they are not adjusted gross scores. Course updates recalculate an active round after confirmation; scores do not snapshot historic tee ratings. Export a round before updating course data if you need that historical record.
+Standalone round scores remain editable and are not attested. Ties remain tied, with no countback or sudden-death holes. Incomplete individual stroke cards are separated from complete results, and all incomplete results remain provisional. Team points require an entry from both partners per hole (use X for a partner who picks up). Round gross subtotals exclude X; season differential calculations separately apply net double bogey. Course updates recalculate the active round after confirmation. Recorded season events snapshot their tees and cards, so later course edits do not change historical results. Use Undo latest competition for season corrections. Export your data for backup.
 
 Before running official club competitions, add competition governance, authorised data, audit/attestation, eligibility checks and an approved handicap-service integration as required. Local Rules and decisions, penalties, disqualification and score acceptance require committee judgement.
